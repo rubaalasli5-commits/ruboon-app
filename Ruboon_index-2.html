@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6c4cff">
+<title>Ruboon | افهمها بسهولة</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#f7f5ff;color:#1b1730}
+main{max-width:520px;margin:auto;padding:20px 16px 35px}
+.brand{color:#6c4cff;font-size:30px;font-weight:900;margin-bottom:4px}
+.subtitle{color:#716b83;margin-top:0}.hero,.result{background:#fff;border-radius:24px;padding:20px;margin-top:16px;box-shadow:0 6px 22px #33206b12}
+textarea{width:100%;min-height:150px;border:1px solid #ddd7f0;border-radius:17px;padding:14px;font-size:16px;resize:vertical}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+button,.file-label{border:0;border-radius:16px;padding:14px;font-size:15px;font-weight:800;text-align:center;cursor:pointer}
+.primary{background:#6c4cff;color:#fff}.secondary{background:#eeeaff;color:#5b42c9}
+.file-label{display:block}.loading{display:none;color:#6c4cff;font-weight:800;margin-top:12px}
+.result{display:none}.result h2{margin-top:0}.part{padding:13px 0;border-bottom:1px solid #eee9f7}.part:last-child{border-bottom:0}
+.part b{display:block;margin-bottom:5px;color:#5b42c9}.part div{line-height:1.7}
+.tip{font-size:13px;color:#777083;margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">Ruboon 💜</div>
+  <p class="subtitle">صوّري الرسالة أو اكتبيها… وأنا أوضح لك المطلوب 🤖</p>
+
+  <section class="hero">
+    <textarea id="text" placeholder="ضعي هنا رسالة المدرسة، فاتورة، موعد أو أي نص غير واضح…"></textarea>
+    <label class="file-label secondary" for="image">📸 اختاري صورة أو صوّري رسالة</label>
+    <input id="image" type="file" accept="image/*" capture="environment" hidden>
+    <div class="actions">
+      <button class="primary" id="analyze">افهمها لي ✨</button>
+      <button class="secondary" id="example">جرّبي مثالًا</button>
+    </div>
+    <div class="loading" id="loading" aria-live="polite">Ruboon يحلل الرسالة… 🤖</div>
+    <div class="tip">ملاحظة: يجب تشغيل الخادم وربط مفتاح AI حتى يعمل التحليل الحقيقي.</div>
+  </section>
+
+  <section class="result" id="result">
+    <h2>فهمنا الرسالة 💜</h2>
+    <div class="part"><b>🔴 المهم</b><div id="important"></div></div>
+    <div class="part"><b>✅ ماذا تفعلين؟</b><div id="action"></div></div>
+    <div class="part"><b>📅 الموعد</b><div id="deadline"></div></div>
+    <div class="part"><b>💬 رد جاهز</b><div id="reply"></div></div>
+    <button class="primary" id="copy">نسخ الرد 📋</button>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+$("example").onclick = () => {
+  $("text").value = "مرحبًا، يجب إرسال صورة الإجازة إلى المدرسة قبل يوم الاثنين.";
+};
+$("analyze").onclick = async () => {
+  const text = $("text").value.trim();
+  const file = $("image").files[0];
+  if (!text && !file) return alert("اكتبي رسالة أو اختاري صورة أولًا 💜");
+  const data = new FormData();
+  if (text) data.append("text", text);
+  if (file) data.append("image", file);
+  $("loading").style.display = "block";
+  $("result").style.display = "none";
+  try {
+    const response = await fetch("/api/analyze", {method:"POST", body:data});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "حدث خطأ");
+    ["important","action","deadline","reply"].forEach(key => {
+      $(key).textContent = result[key] || "غير واضح";
+    });
+    $("result").style.display = "block";
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    $("loading").style.display = "none";
+  }
+};
+$("copy").onclick = async () => {
+  await navigator.clipboard.writeText($("reply").textContent);
+  alert("تم نسخ الرد 📋");
+};
+</script>
+</body>
+</html>
